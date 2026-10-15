@@ -260,7 +260,7 @@ def classify_request(message):
 
     category_rules = {
         "Rescue": [
-            "trapped", "stranded", "drowning", "rescue",
+            "trapped", "stranded", "drowning", "rescue", "save us"
             "बचाओ", "फंसा", "फंसी", "बाढ़ में","बाढ़" , "फंस चुका हूँ"
         ],
         #multi-category domain classfication in categoruy & urgency
