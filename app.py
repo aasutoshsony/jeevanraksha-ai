@@ -261,8 +261,10 @@ def classify_request(message):
     category_rules = {
         "Rescue": [
             "trapped", "stranded", "drowning", "rescue",
-            "बचाओ", "फंसा", "फंसी", "बाढ़ में",
+            "बचाओ", "फंसा", "फंसी", "बाढ़ में","बाढ़" , "फंस चुका हूँ"
         ],
+        #multi-category domain classfication in categoruy & urgency
+        # if keyword from two category mathces then model gets confused 
         "Medical": [
             "bleeding", "injured", "unconscious",
             "medicine", "hospital", "can't breathe",
@@ -301,7 +303,8 @@ def classify_request(message):
     elif any(word in text for word in high_keywords):
         urgency = "High"
     elif category != "Other":
-        urgency = "Medium"
+        urgency = "Medium" 
+        #define keywords and criteria for medioum
     else:
         urgency = "Low"
 
