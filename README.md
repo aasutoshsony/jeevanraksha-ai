@@ -1,6 +1,6 @@
 # JeevanRaksha AI 🇮🇳
 
-**A voice-based disaster-relief assistant built to help people report emergency needs during floods and cyclones.**
+**A voice-based disaster-relief assistant built to help people report emergency needs during disasters/emergencies like floods and cyclones.**
 
 JeevanRaksha AI lets people report their needs by voice, get a spoken confirmation, and helps relief teams manage requests in one place.
 
