@@ -7,7 +7,6 @@ __pycache__/
 
 #dataBase
 jeevanraksha.db 
-.streamlit/secrets.toml
 
 # Python cache
 __pycache__/
@@ -16,3 +15,5 @@ __pycache__/
 # Secrets
 .env
 .streamlit/secrets.toml
+
+appOLD.py

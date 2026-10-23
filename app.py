@@ -1,6 +1,5 @@
 
 import os
-import re
 import uuid
 import sqlite3
 from datetime import datetime
@@ -10,9 +9,8 @@ import requests
 import streamlit as st
 from dotenv import load_dotenv
 
-# =============== 1. Configuration ====================
 
-load_dotenv()
+# =============== 1. Configuration ====================
 
 st.set_page_config(
     page_title="JeevanRaksha AI",
@@ -20,7 +18,9 @@ st.set_page_config(
     layout="wide",
 )
 
-API_KEY = os.getenv("GNANI_API_KEY")
+load_dotenv()
+
+API_KEY = st.secrets.get("GNANI_API_KEY", os.getenv("GNANI_API_KEY"))
 DB = "jeevanraksha.db"
 
 LANGUAGES = {
@@ -40,11 +40,10 @@ CATEGORIES = ["Rescue", "Medical", "Food & Water", "Shelter", "Other"]
 URGENCIES = ["Critical", "High", "Medium", "Low"]
 STATUSES = ["Pending", "Assigned", "Resolved"]
 
-# =============== 2. Simple UI Styling ====================
 
-# =============== Hero Header Styling ====================
+# =============== 2. UI Styling ====================
 
-st.markdown(""" 
+st.markdown("""
 <style>
 .hero {
     position: relative;
@@ -55,23 +54,16 @@ st.markdown("""
     color: #f5f7f4;
     background-color: #244b40;
     background-image:
-        radial-gradient(
-            circle at 85% 30%,
-            rgba(255, 255, 255, 0.07) 0,
-            transparent 35%
-        ),
-        repeating-linear-gradient(
-            0deg,
-            rgba(255, 255, 255, 0.018) 0px,
-            rgba(255, 255, 255, 0.018) 1px,
-            transparent 1px,
-            transparent 4px
-        ),
+        radial-gradient(circle at 85% 30%,
+            rgba(255,255,255,0.07) 0, transparent 35%),
+        repeating-linear-gradient(0deg,
+            rgba(255,255,255,0.018) 0px,
+            rgba(255,255,255,0.018) 1px,
+            transparent 1px, transparent 4px),
         linear-gradient(115deg, #203f36 0%, #2b5548 100%);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    box-shadow: 0 2px 8px rgba(20, 45, 35, 0.08);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 2px 8px rgba(20,45,35,0.08);
 }
-
 .hero::after {
     content: "✚";
     position: absolute;
@@ -81,10 +73,9 @@ st.markdown("""
     font-size: 150px;
     font-weight: 300;
     line-height: 1;
-    color: rgba(255, 255, 255, 0.045);
+    color: rgba(255,255,255,0.045);
     pointer-events: none;
 }
-
 .hero h1 {
     position: relative;
     z-index: 1;
@@ -94,7 +85,6 @@ st.markdown("""
     letter-spacing: -0.6px;
     margin: 0 0 8px 0;
 }
-
 .hero p {
     position: relative;
     z-index: 1;
@@ -105,48 +95,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =============== Hero Header ====================
-
 st.markdown("""
 <div class="hero">
     <h1>🛟 JeevanRaksha AI</h1>
-    <p>Disaster relief coordination · Multilingual voice assistance 📞 </p>
+    <p>Disaster relief coordination · Multilingual voice assistance 📞</p>
 </div>
 """, unsafe_allow_html=True)
 
-# st.markdown("""
-# <style>
-# .block-container {
-#     padding-top: 2rem;
-#     max-width: 1200px;
-# }
-# .hero {
-#     padding: 24px;
-#     border-radius: 14px;
-#     background: linear-gradient(115deg, #163b36 0%, #24574f 100%);
-#     color: #f7faf9;
-#     margin-bottom: 22px;
-#     border: 1px solid rgba(255, 255, 255, 0.08);
-# }
-# .hero h1 {
-#     color: #f7faf9;
-#     margin-bottom: 5px;
-#     font-weight: 600;
-# }
-
-# .hero p {
-#     color: #d0e2dc;
-#     margin-bottom: 0;
-# }
-# </style>
-# """, unsafe_allow_html=True)
-
-# st.markdown("""
-# <div class="hero">
-#     <h1>🛟 JeevanRaksha AI</h1>
-#     <p>Multilingual disaster-relief request intake and coordination</p>
-# </div>
-# """, unsafe_allow_html=True)
 
 # =============== 3. Database ====================
 
@@ -197,6 +152,7 @@ def save_request(language, location, message, category, urgency):
 
 init_db()
 
+
 # =============== 4. Gnani Speech-to-Text ====================
 
 def transcribe_audio(audio_bytes, language_code):
@@ -204,17 +160,12 @@ def transcribe_audio(audio_bytes, language_code):
         "https://api.vachana.ai/stt/v3",
         headers={"X-API-Key-ID": API_KEY},
         files={
-            "audio_file": (
-                "emergency.wav",
-                audio_bytes,
-                "audio/wav",
-            )
+            "audio_file": ("emergency.wav", audio_bytes, "audio/wav")
         },
         data={"language_code": language_code},
         timeout=90,
     )
     response.raise_for_status()
-
     result = response.json()
 
     if not result.get("success") or not result.get("transcript"):
@@ -249,7 +200,6 @@ def generate_speech(text, language_code):
         timeout=90,
     )
     response.raise_for_status()
-
     return response.content
 
 
@@ -260,15 +210,13 @@ def classify_request(message):
 
     category_rules = {
         "Rescue": [
-            "trapped", "stranded", "drowning", "rescue", "save us"
-            "बचाओ", "फंसा", "फंसी", "बाढ़ में","बाढ़" , "फंस चुका हूँ"
+            "trapped", "stranded", "drowning", "rescue", "save us",
+            "बचाओ", "फंसा", "फंसी", "बाढ़ में", "बाढ़", "फंस चुका हूँ",
         ],
-        #multi-category domain classfication in categoruy & urgency
-        # if keyword from two category mathces then model gets confused 
         "Medical": [
-            "bleeding", "injured", "unconscious",
-            "medicine", "hospital", "can't breathe",
-            "घायल", "खून", "अस्पताल", "सांस नहीं",
+            "bleeding", "injured", "unconscious", "medicine",
+            "hospital", "can't breathe", "घायल", "खून",
+            "अस्पताल", "सांस नहीं",
         ],
         "Food & Water": [
             "food", "hungry", "thirsty", "drinking water",
@@ -289,13 +237,13 @@ def classify_request(message):
 
     critical_keywords = [
         "trapped", "drowning", "bleeding", "unconscious",
-        "can't breathe", "cannot breathe",
-        "बचाओ", "सांस नहीं", "खून बह",
+        "can't breathe", "cannot breathe", "बचाओ",
+        "सांस नहीं", "खून बह",
     ]
 
     high_keywords = [
         "injured", "stranded", "urgent", "मौत",
-        "no food", "no water", "घायल", "death"
+        "no food", "no water", "घायल", "death",
     ]
 
     if any(word in text for word in critical_keywords):
@@ -303,8 +251,7 @@ def classify_request(message):
     elif any(word in text for word in high_keywords):
         urgency = "High"
     elif category != "Other":
-        urgency = "Medium" 
-        #define keywords and criteria for medioum
+        urgency = "Medium"
     else:
         urgency = "Low"
 
@@ -314,8 +261,8 @@ def classify_request(message):
 # =============== 7. API Key Check ====================
 
 if not API_KEY:
-    st.error("GNANI_API_KEY is missing. Add it to your .env file.")
-    st.stop()
+    st.error("GNANI_API_KEY is missing. Configure it in Streamlit Secrets or your .env file.")
+
 
 # =============== 8. Main Application ====================
 
@@ -323,6 +270,9 @@ intake_tab, dashboard_tab = st.tabs([
     "🎙️ Emergency Intake",
     "📊 Relief Dashboard",
 ])
+
+
+# =============== 9. Public Emergency Intake ====================
 
 with intake_tab:
     st.subheader("Register an emergency request")
@@ -344,7 +294,7 @@ with intake_tab:
     with col1:
         if st.button(
             "Transcribe with Gnani",
-            disabled=audio is None,
+            disabled=audio is None or not API_KEY,
             use_container_width=True,
         ):
             try:
@@ -377,6 +327,7 @@ with intake_tab:
 
         c1, c2 = st.columns(2)
         c1.info(f"**Category:** {category}")
+
         if urgency == "Critical":
             c2.error(f"**Urgency:** {urgency}")
         elif urgency == "High":
@@ -395,11 +346,7 @@ with intake_tab:
             category, urgency = classify_request(message)
 
             request_id = save_request(
-                language,
-                location,
-                message,
-                category,
-                urgency,
+                language, location, message, category, urgency
             )
 
             st.success(f"Request recorded successfully: {request_id}")
@@ -414,129 +361,147 @@ with intake_tab:
 
             st.info(confirmation)
 
-            try:
-                with st.spinner("Generating spoken confirmation..."):
-                    audio_bytes = generate_speech(
-                        confirmation, language_code
+            if API_KEY:
+                try:
+                    with st.spinner("Generating spoken confirmation..."):
+                        audio_bytes = generate_speech(
+                            confirmation, language_code
+                        )
+                    st.audio(audio_bytes, format="audio/wav")
+                except Exception as e:
+                    st.warning(
+                        "The request was saved, but speech generation failed. "
+                        f"Error: {e}"
                     )
-                st.audio(audio_bytes, format="audio/wav")
-            except Exception as e:
-                st.warning(
-                    "The request was saved, but speech generation failed. "
-                    f"Error: {e}"
-                )
 
             st.caption(
                 "This prototype records requests; it does not contact "
                 "emergency services."
             )
 
+
+# =============== 10. Protected Relief Dashboard ====================
+
 with dashboard_tab:
-    st.subheader("Relief coordination dashboard")
+    if not st.session_state.get("dashboard_authenticated", False):
+        st.subheader("🔒 Coordinator Login")
+        st.caption("Authorized relief coordinators only.")
 
-    df = get_requests()
+        with st.form("dashboard_login"):
+            password = st.text_input("Dashboard password", type="password")
+            submitted = st.form_submit_button("Sign in")
 
-    if df.empty:
-        st.info("No requests recorded yet. Submit a test request first.")
+            if submitted:
+                dashboard_password = st.secrets.get("DASHBOARD_PASSWORD", "")
+
+                if dashboard_password and password == dashboard_password:
+                    st.session_state["dashboard_authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("Incorrect password or dashboard password not configured.")
+
     else:
-        c1, c2, c3, c4 = st.columns(4)
+        top_col, logout_col = st.columns([5, 1])
 
-        c1.metric("Total requests", len(df))
-        c2.metric(
-            "Critical",
-            int((df["urgency"] == "Critical").sum()),
-        )
-        c3.metric(
-            "Pending",
-            int((df["status"] == "Pending").sum()),
-        )
-        c4.metric(
-            "Resolved",
-            int((df["status"] == "Resolved").sum()),
-        )
+        with top_col:
+            st.subheader("Relief coordination dashboard")
 
-        st.divider()
-        st.subheader("Filter requests")
-
-        f1, f2, f3 = st.columns(3)
-
-        category_filter = f1.selectbox(
-            "Category",
-            ["All"] + CATEGORIES,
-        )
-        urgency_filter = f2.selectbox(
-            "Urgency",
-            ["All"] + URGENCIES,
-        )
-        status_filter = f3.selectbox(
-            "Status",
-            ["All"] + STATUSES,
-        )
-
-        filtered = df.copy()
-
-        if category_filter != "All":
-            filtered = filtered[
-                filtered["category"] == category_filter
-            ]
-
-        if urgency_filter != "All":
-            filtered = filtered[
-                filtered["urgency"] == urgency_filter
-            ]
-
-        if status_filter != "All":
-            filtered = filtered[
-                filtered["status"] == status_filter
-            ]
-
-        display_columns = [
-            "id", "created_at", "location", "category",
-            "urgency", "status", "message",
-        ]
-
-        st.dataframe(
-            filtered[display_columns],
-            use_container_width=True,
-            hide_index=True,
-        )
-
-        st.divider()
-        st.subheader("Update request status")
-
-        if not filtered.empty:
-            selected_id = st.selectbox(
-                "Select request",
-                filtered["id"].tolist(),
-            )
-
-            current_status = filtered.loc[
-                filtered["id"] == selected_id, "status"
-            ].iloc[0]
-
-            new_status = st.selectbox(
-                "New status",
-                STATUSES,
-                index=STATUSES.index(current_status),
-            )
-
-            if st.button("Save status update"):
-                with sqlite3.connect(DB) as con:
-                    con.execute(
-                        "UPDATE requests SET status = ? WHERE id = ?",
-                        (new_status, selected_id),
-                    )
-
-                st.success("Request status updated.")
+        with logout_col:
+            if st.button("Log out"):
+                st.session_state["dashboard_authenticated"] = False
                 st.rerun()
 
+        df = get_requests()
+
+        if df.empty:
+            st.info("No requests recorded yet. Submit a test request first.")
         else:
-            st.info("No requests match these filters.")
+            c1, c2, c3, c4 = st.columns(4)
 
-    if st.button("🔄 Refresh dashboard"):
-        st.rerun()
+            c1.metric("Total requests", len(df))
+            c2.metric("Critical", int((df["urgency"] == "Critical").sum()))
+            c3.metric("Pending", int((df["status"] == "Pending").sum()))
+            c4.metric("Resolved", int((df["status"] == "Resolved").sum()))
 
-# =============== 9. Footer ====================
+            st.divider()
+            st.subheader("Filter requests")
+
+            f1, f2, f3 = st.columns(3)
+
+            category_filter = f1.selectbox(
+                "Category", ["All"] + CATEGORIES
+            )
+            urgency_filter = f2.selectbox(
+                "Urgency", ["All"] + URGENCIES
+            )
+            status_filter = f3.selectbox(
+                "Status", ["All"] + STATUSES
+            )
+
+            filtered = df.copy()
+
+            if category_filter != "All":
+                filtered = filtered[
+                    filtered["category"] == category_filter
+                ]
+
+            if urgency_filter != "All":
+                filtered = filtered[
+                    filtered["urgency"] == urgency_filter
+                ]
+
+            if status_filter != "All":
+                filtered = filtered[
+                    filtered["status"] == status_filter
+                ]
+
+            display_columns = [
+                "id", "created_at", "location", "category",
+                "urgency", "status", "message",
+            ]
+
+            st.dataframe(
+                filtered[display_columns],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            st.divider()
+            st.subheader("Update request status")
+
+            if not filtered.empty:
+                selected_id = st.selectbox(
+                    "Select request",
+                    filtered["id"].tolist(),
+                )
+
+                current_status = filtered.loc[
+                    filtered["id"] == selected_id, "status"
+                ].iloc[0]
+
+                new_status = st.selectbox(
+                    "New status",
+                    STATUSES,
+                    index=STATUSES.index(current_status),
+                )
+
+                if st.button("Save status update"):
+                    with sqlite3.connect(DB) as con:
+                        con.execute(
+                            "UPDATE requests SET status = ? WHERE id = ?",
+                            (new_status, selected_id),
+                        )
+
+                    st.success("Request status updated.")
+                    st.rerun()
+            else:
+                st.info("No requests match these filters.")
+
+            if st.button("🔄 Refresh dashboard"):
+                st.rerun()
+
+
+# =============== 11. Footer ====================
 
 st.divider()
 st.caption(
